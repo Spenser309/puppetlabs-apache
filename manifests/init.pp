@@ -39,9 +39,24 @@ class apache (
     ensure  => directory,
     path    => $apache::params::vdir,
     recurse => true,
-    purge   => true,
+    purge   => $::osfamily ? {
+                 redhat  => false,
+                 default => true,
+               },
     notify  => Service['httpd'],
     require => Package['httpd'],
+  }
+
+  if $::osfamily == 'redhat' {
+    file { 
+      "${apache::params::vdir}/welcome.conf":
+        ensure  => absent,
+        require => Package['httpd'];
+      "${apache::params::vdir}/README":
+        ensure  => absent,
+        require => Package['httpd'],
+    }
+     
   }
 
   if $apache::params::conf_dir and $apache::params::conf_file {
